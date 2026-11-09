@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
+import 'my_trips_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,11 +19,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _pages = const [
     HomeScreen(),
     ExploreScreen(),
-    _PlaceholderPage(
-      title: 'My Trips',
-      subtitle: 'Your planned journeys will appear here.',
-      icon: Icons.luggage_outlined,
-    ),
+    MyTripsScreen(),
     _PlaceholderPage(
       title: 'Profile',
       subtitle: 'Manage your travel profile.',
