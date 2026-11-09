@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'screens/main_navigation_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -15,18 +16,7 @@ class TripMateApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'TripMate',
       theme: AppTheme.lightTheme,
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'TripMate\nYour journey, beautifully planned.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
+      home: const MainNavigationScreen(),
     );
   }
 }
