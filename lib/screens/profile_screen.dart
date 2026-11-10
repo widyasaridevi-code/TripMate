@@ -16,6 +16,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String favoriteDestination = 'Not selected';
   String travelStyle = 'Not selected';
 
+  bool notificationsEnabled = true;
+
   final List<String> destinations = [
     'Bali',
     'Yogyakarta',
@@ -95,9 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                  },
+                  onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
@@ -209,11 +209,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               _buildSectionTitle('Settings'),
               const SizedBox(height: 12),
-              _buildMenuItem(
-                icon: Icons.notifications_none,
-                title: 'Notifications',
-                subtitle: 'Manage your notifications',
-              ),
+
+              _buildNotificationItem(),
+
               _buildMenuItem(
                 icon: Icons.lock_outline,
                 title: 'Privacy & Security',
@@ -378,6 +376,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildNotificationItem() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.notifications_none,
+            color: AppColors.primary,
+            size: 22,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.charcoal,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  notificationsEnabled ? 'Notifications are on' : 'Notifications are off',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.charcoal.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: notificationsEnabled,
+            activeThumbColor: AppColors.primary,
+            onChanged: (value) {
+              setState(() {
+                notificationsEnabled = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -496,9 +550,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
