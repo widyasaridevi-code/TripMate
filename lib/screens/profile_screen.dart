@@ -17,6 +17,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String travelStyle = 'Not selected';
 
   bool notificationsEnabled = true;
+  bool profileVisibility = true;
+  bool locationSharing = false;
 
   final List<String> destinations = [
     'Bali',
@@ -128,6 +130,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void openPrivacySettings() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Privacy & Security'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Profile Visibility'),
+                    subtitle: Text(
+                      profileVisibility
+                          ? 'Your profile is visible'
+                          : 'Your profile is hidden',
+                    ),
+                    activeThumbColor: AppColors.primary,
+                    value: profileVisibility,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        profileVisibility = value;
+                      });
+                      setState(() {
+                        profileVisibility = value;
+                      });
+                    },
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Location Sharing'),
+                    subtitle: Text(
+                      locationSharing
+                          ? 'Location sharing is enabled'
+                          : 'Location sharing is disabled',
+                    ),
+                    activeThumbColor: AppColors.primary,
+                    value: locationSharing,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        locationSharing = value;
+                      });
+                      setState(() {
+                        locationSharing = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,6 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.lock_outline,
                 title: 'Privacy & Security',
                 subtitle: 'Manage your account privacy',
+                onTap: openPrivacySettings,
               ),
               _buildMenuItem(
                 icon: Icons.help_outline,
@@ -409,7 +477,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  notificationsEnabled ? 'Notifications are on' : 'Notifications are off',
+                  notificationsEnabled
+                      ? 'Notifications are on'
+                      : 'Notifications are off',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.charcoal.withValues(alpha: 0.6),
