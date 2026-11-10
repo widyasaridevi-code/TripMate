@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../services/preferences_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -38,6 +39,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'Budget Friendly',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    loadSavedData();
+  }
+
+  Future<void> loadSavedData() async {
+    final profile = await PreferencesService.getProfile();
+    final preferences =
+        await PreferencesService.getTravelPreferences();
+    final settings = await PreferencesService.getSettings();
+
+    if (!mounted) return;
+
+    setState(() {
+      userName = profile['name']!;
+      userEmail = profile['email']!;
+
+      favoriteDestination = preferences['destination']!;
+      travelStyle = preferences['style']!;
+
+      notificationsEnabled = settings['notifications']!;
+      profileVisibility = settings['visibility']!;
+      locationSharing = settings['location']!;
+    });
+  }
+
+  Future<void> saveSettingsData() async {
+    await PreferencesService.saveSettings(
+      notifications: notificationsEnabled,
+      visibility: profileVisibility,
+      location: locationSharing,
+    );
+  }
+
   Future<void> editProfile() async {
     final result = await showDialog<Map<String, String>>(
       context: context,
@@ -54,6 +90,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userName = result['name'] ?? userName;
         userEmail = result['email'] ?? userEmail;
       });
+
+      await PreferencesService.saveProfile(
+        name: userName,
+        email: userEmail,
+      );
     }
   }
 
@@ -127,6 +168,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           travelStyle = result;
         }
       });
+
+      await PreferencesService.saveTravelPreferences(
+        destination: favoriteDestination,
+        style: travelStyle,
+      );
     }
   }
 
@@ -151,13 +197,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     activeThumbColor: AppColors.primary,
                     value: profileVisibility,
-                    onChanged: (value) {
+                    onChanged: (value) async {
                       setDialogState(() {
                         profileVisibility = value;
                       });
+
                       setState(() {
                         profileVisibility = value;
                       });
+
+                      await saveSettingsData();
                     },
                   ),
                   const Divider(),
@@ -171,13 +220,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     activeThumbColor: AppColors.primary,
                     value: locationSharing,
-                    onChanged: (value) {
+                    onChanged: (value) async {
                       setDialogState(() {
                         locationSharing = value;
                       });
+
                       setState(() {
                         locationSharing = value;
                       });
+
+                      await saveSettingsData();
                     },
                   ),
                 ],
@@ -604,10 +656,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Switch(
             value: notificationsEnabled,
             activeThumbColor: AppColors.primary,
-            onChanged: (value) {
+            onChanged: (value) async {
               setState(() {
                 notificationsEnabled = value;
               });
+
+              await saveSettingsData();
             },
           ),
         ],
