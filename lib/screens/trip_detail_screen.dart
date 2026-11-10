@@ -1,5 +1,8 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/trips_provider.dart';
 import '../theme/app_colors.dart';
 
 class TripDetailScreen extends StatelessWidget {
@@ -9,6 +12,92 @@ class TripDetailScreen extends StatelessWidget {
     super.key,
     required this.trip,
   });
+
+  Future<void> editTrip(BuildContext context) async {
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (_) => _EditTripDialog(trip: trip),
+    );
+
+    if (result == null || !context.mounted) return;
+
+    try {
+      await context.read<TripsProvider>().updateTrip(
+        trip['id'] as int,
+        {
+          'destination': result['destination']!,
+          'location': result['location']!,
+          'travel_date': result['date']!,
+        },
+      );
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Trip updated successfully!'),
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update trip: $e')),
+      );
+    }
+  }
+
+  Future<void> deleteTrip(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Trip?'),
+        content: const Text(
+          'Are you sure you want to delete this trip?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !context.mounted) return;
+
+    try {
+      await context.read<TripsProvider>().deleteTrip(
+        trip['id'] as int,
+      );
+
+      if (!context.mounted) return;
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Trip deleted successfully!'),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete trip: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +116,21 @@ class TripDetailScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.charcoal,
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () => editTrip(context),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Trip',
+          ),
+          IconButton(
+            onPressed: () => deleteTrip(context),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Colors.red,
+            ),
+            tooltip: 'Delete Trip',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -208,6 +312,116 @@ class TripDetailScreen extends StatelessWidget {
         size: 55,
         color: AppColors.primary,
       ),
+    );
+  }
+}
+
+class _EditTripDialog extends StatefulWidget {
+  final Map<String, dynamic> trip;
+
+  const _EditTripDialog({required this.trip});
+
+  @override
+  State<_EditTripDialog> createState() => _EditTripDialogState();
+}
+
+class _EditTripDialogState extends State<_EditTripDialog> {
+  late final TextEditingController destinationController;
+  late final TextEditingController locationController;
+  late final TextEditingController dateController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    destinationController = TextEditingController(
+      text: widget.trip['destination'] ?? '',
+    );
+
+    locationController = TextEditingController(
+      text: widget.trip['location'] ?? '',
+    );
+
+    dateController = TextEditingController(
+      text: widget.trip['date'] ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    destinationController.dispose();
+    locationController.dispose();
+    dateController.dispose();
+    super.dispose();
+  }
+
+  void submit() {
+    final destination = destinationController.text.trim();
+    final location = locationController.text.trim();
+    final date = dateController.text.trim();
+
+    if (destination.isEmpty || location.isEmpty || date.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete all fields.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context, {
+      'destination': destination,
+      'location': location,
+      'date': date,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Trip'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: destinationController,
+              decoration: const InputDecoration(
+                labelText: 'Destination',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: locationController,
+              decoration: const InputDecoration(
+                labelText: 'Location',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: dateController,
+              decoration: const InputDecoration(
+                labelText: 'Travel Date',
+                hintText: 'e.g. 20/12/2026',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: submit,
+          child: const Text('Save Changes'),
+        ),
+      ],
     );
   }
 }

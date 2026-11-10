@@ -1,15 +1,17 @@
 
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../repositories/saved_trips_repository.dart';
 
 class TripsProvider extends ChangeNotifier {
-  static const String _tripsKey = 'saved_trips';
+  final SavedTripsRepository _repository;
+
+  TripsProvider(this._repository);
 
   bool _isLoading = true;
 
   bool get isLoading => _isLoading;
+
+  String? errorMessage;
 
   final List<Map<String, dynamic>> _trips = [];
 
@@ -26,94 +28,103 @@ class TripsProvider extends ChangeNotifier {
           .where((trip) => trip['status'] == 'Completed')
           .toList();
 
-  final List<Map<String, dynamic>> _defaultTrips = [
-    {
-      'destination': 'Bali',
-      'location': 'Indonesia',
-      'date': '15 - 18 December 2026',
-      'status': 'Upcoming',
-      'image':
-          'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800',
-    },
-    {
-      'destination': 'Raja Ampat',
-      'location': 'West Papua, Indonesia',
-      'date': '10 - 14 August 2026',
-      'status': 'Completed',
-      'image':
-          'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800',
-    },
-  ];
+  // Menyesuaikan data Supabase dengan format yang dipakai UI
+  Map<String, dynamic> _formatTrip(Map<String, dynamic> trip) {
+    return {
+      ...trip,
+      'date': trip['travel_date'] ?? trip['date'] ?? '',
+      'image': trip['image'] ?? '',
+    };
+  }
 
+  // READ
   Future<void> loadTrips() async {
     _isLoading = true;
+    errorMessage = null;
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedTrips = prefs.getString(_tripsKey);
+      final result = await _repository.getTrips();
 
-      if (savedTrips != null) {
-        final List<dynamic> decodedTrips =
-            jsonDecode(savedTrips);
-
-        _trips
-          ..clear()
-          ..addAll(
-            decodedTrips.map(
-              (trip) => Map<String, dynamic>.from(trip),
-            ),
-          );
-      } else {
-        _trips
-          ..clear()
-          ..addAll(
-            _defaultTrips.map(
-              (trip) => Map<String, dynamic>.from(trip),
-            ),
-          );
-
-        await _saveTrips();
-      }
-    } catch (e) {
       _trips
         ..clear()
-        ..addAll(
-          _defaultTrips.map(
-            (trip) => Map<String, dynamic>.from(trip),
-          ),
-        );
-
-      await _saveTrips();
+        ..addAll(result.map(_formatTrip));
+    } catch (e) {
+      errorMessage = e.toString();
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
+  // CREATE
   Future<void> addTrip({
     required String destination,
     required String location,
     required String date,
   }) async {
-    _trips.insert(0, {
-      'destination': destination,
-      'location': location,
-      'date': date,
-      'status': 'Upcoming',
-      'image': '',
-    });
+    try {
+      final result = await _repository.addTrip({
+        'destination': destination,
+        'location': location,
+        'travel_date': date,
+        'status': 'Upcoming',
+      });
 
-    await _saveTrips();
-    notifyListeners();
+      _trips.insert(0, _formatTrip(result));
+
+      errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
-  Future<void> _saveTrips() async {
-    final prefs = await SharedPreferences.getInstance();
+  // UPDATE
+  Future<void> updateTrip(
+    int id,
+    Map<String, dynamic> updatedTrip,
+  ) async {
+    try {
+      final result = await _repository.updateTrip(
+        id,
+        updatedTrip,
+      );
 
-    await prefs.setString(
-      _tripsKey,
-      jsonEncode(_trips),
-    );
+      final index = _trips.indexWhere(
+        (trip) => trip['id'] == id,
+      );
+
+      if (index != -1) {
+        _trips[index] = _formatTrip(result);
+      }
+
+      errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  // DELETE
+  Future<void> deleteTrip(int id) async {
+    try {
+      await _repository.deleteTrip(id);
+
+      _trips.removeWhere(
+        (trip) => trip['id'] == id,
+      );
+
+      errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 }
