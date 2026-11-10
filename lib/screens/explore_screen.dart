@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -10,6 +11,8 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  static const String _favoritesKey = 'explore_favorites';
+
   String selectedCategory = 'All';
   String searchQuery = '';
 
@@ -49,6 +52,42 @@ class _ExploreScreenState extends State<ExploreScreen> {
   ];
 
   final Set<String> favorites = {};
+
+  @override
+  void initState() {
+    super.initState();
+    loadFavorites();
+  }
+
+  Future<void> loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedFavorites = prefs.getStringList(_favoritesKey) ?? [];
+
+    if (mounted) {
+      setState(() {
+        favorites
+          ..clear()
+          ..addAll(savedFavorites);
+      });
+    }
+  }
+
+  Future<void> toggleFavorite(String name) async {
+    setState(() {
+      if (favorites.contains(name)) {
+        favorites.remove(name);
+      } else {
+        favorites.add(name);
+      }
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setStringList(
+      _favoritesKey,
+      favorites.toList(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,13 +285,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 backgroundColor: Colors.white,
                                 child: IconButton(
                                   onPressed: () {
-                                    setState(() {
-                                      if (isFavorite) {
-                                        favorites.remove(name);
-                                      } else {
-                                        favorites.add(name);
-                                      }
-                                    });
+                                    toggleFavorite(name);
                                   },
                                   icon: Icon(
                                     isFavorite
