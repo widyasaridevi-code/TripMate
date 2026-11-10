@@ -195,6 +195,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void openHelpSupport() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.help_outline, color: AppColors.primary),
+              SizedBox(width: 10),
+              Text('Help & Support'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Frequently Asked Questions',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.charcoal,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildFaq(
+                  'How do I plan a trip?',
+                  'Open the My Trips menu and select Plan a New Trip. '
+                      'Fill in your destination and travel date.',
+                ),
+                _buildFaq(
+                  'How do I explore destinations?',
+                  'Open the Explore menu to browse destinations and '
+                      'filter places based on your interests.',
+                ),
+                _buildFaq(
+                  'Can I edit my profile?',
+                  'Yes! Open your Profile page and tap Edit Profile '
+                      'to update your name and email address.',
+                ),
+                _buildFaq(
+                  'Can I change my travel preferences?',
+                  'Yes. Select Favorite Destination or Travel Style '
+                      'in the Travel Preferences section.',
+                ),
+                const Divider(height: 24),
+                const Text(
+                  'Need More Help?',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.charcoal,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Thank you for using TripMate! '
+                  'This help section provides basic guidance '
+                  'for using the application.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: AppColors.charcoal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Got it'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFaq(String question, String answer) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            question,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            answer,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: AppColors.charcoal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -289,6 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.help_outline,
                 title: 'Help & Support',
                 subtitle: 'Get help with TripMate',
+                onTap: openHelpSupport,
               ),
 
               const SizedBox(height: 28),
