@@ -2,8 +2,35 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String userName = 'Komang Widyasari Devi';
+  String userEmail = '';
+
+  Future<void> editProfile() async {
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) {
+        return EditProfileDialog(
+          name: userName,
+          email: userEmail,
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        userName = result['name']!;
+        userEmail = result['email']!;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +74,11 @@ class ProfileScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 42,
                       backgroundColor: AppColors.softSage,
-                      child: const Text(
-                        'K',
-                        style: TextStyle(
+                      child: Text(
+                        userName.isNotEmpty
+                            ? userName[0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -57,19 +86,21 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    const Text(
-                      'Komang Widyasari Devi',
+                    Text(
+                      userName,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
                         color: AppColors.charcoal,
                       ),
                     ),
                     const SizedBox(height: 5),
-                    const Text(
-                      'Travel Enthusiast',
-                      style: TextStyle(
+                    Text(
+                      userEmail.isEmpty
+                          ? 'Travel Enthusiast'
+                          : userEmail,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: Colors.grey,
                       ),
@@ -93,13 +124,33 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: editProfile,
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('Edit Profile'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 28),
 
-              // Personal Information
               _buildSectionTitle('Personal Information'),
               const SizedBox(height: 12),
 
@@ -107,12 +158,12 @@ class ProfileScreen extends StatelessWidget {
                 _buildMenuItem(
                   Icons.person_outline,
                   'Full Name',
-                  'Komang Widyasari Devi',
+                  userName,
                 ),
                 _buildMenuItem(
                   Icons.email_outlined,
                   'Email Address',
-                  'Not added yet',
+                  userEmail.isEmpty ? 'Not added yet' : userEmail,
                 ),
                 _buildMenuItem(
                   Icons.location_on_outlined,
@@ -123,7 +174,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 25),
 
-              // Travel Preferences
               _buildSectionTitle('Travel Preferences'),
               const SizedBox(height: 12),
 
@@ -142,7 +192,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 25),
 
-              // Settings
               _buildSectionTitle('Settings'),
               const SizedBox(height: 12),
 
@@ -166,7 +215,6 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 25),
 
-              // App Version
               const Center(
                 child: Text(
                   'TripMate v1.0.0',
@@ -207,9 +255,7 @@ class ProfileScreen extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(17),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -260,6 +306,113 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Edit Profile Dialog
+class EditProfileDialog extends StatefulWidget {
+  final String name;
+  final String email;
+
+  const EditProfileDialog({
+    super.key,
+    required this.name,
+    required this.email,
+  });
+
+  @override
+  State<EditProfileDialog> createState() =>
+      _EditProfileDialogState();
+}
+
+class _EditProfileDialogState extends State<EditProfileDialog> {
+  late final TextEditingController nameController;
+  late final TextEditingController emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: widget.name);
+    emailController = TextEditingController(text: widget.email);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    super.dispose();
+  }
+
+  void saveProfile() {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+
+    if (name.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete all fields.'),
+        ),
+      );
+      return;
+    }
+
+    if (!email.contains('@') || !email.contains('.')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context, {
+      'name': name,
+      'email': email,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Profile'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email Address',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: saveProfile,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
