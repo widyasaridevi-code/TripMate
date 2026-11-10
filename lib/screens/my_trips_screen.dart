@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
+import 'trip_detail_screen.dart';
 
 class MyTripsScreen extends StatefulWidget {
   const MyTripsScreen({super.key});
@@ -107,6 +108,17 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     }
   }
 
+  void openTripDetail(Map<String, dynamic> trip) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TripDetailScreen(
+          trip: trip,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final upcomingTrips = trips
@@ -153,7 +165,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                             ),
                           ],
                         ),
-                        CircleAvatar(
+                        const CircleAvatar(
                           backgroundColor: AppColors.softSage,
                           child: Icon(
                             Icons.luggage,
@@ -162,9 +174,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 25),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -181,32 +191,24 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 28),
-
                     _buildSectionTitle(
                       'Upcoming Trips',
                       upcomingTrips.length,
                     ),
-
                     const SizedBox(height: 15),
-
                     if (upcomingTrips.isEmpty)
                       _buildEmptyState('No upcoming trips yet.')
                     else
                       ...upcomingTrips.map(
                         (trip) => _buildTripCard(trip),
                       ),
-
                     const SizedBox(height: 20),
-
                     _buildSectionTitle(
                       'Completed Trips',
                       completedTrips.length,
                     ),
-
                     const SizedBox(height: 15),
-
                     if (completedTrips.isEmpty)
                       _buildEmptyState('No completed trips yet.')
                     else
@@ -262,111 +264,116 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   Widget _buildTripCard(Map<String, dynamic> trip) {
     final isUpcoming = trip['status'] == 'Upcoming';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(18),
+    return GestureDetector(
+      onTap: () {
+        openTripDetail(trip);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 15),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+              child: trip['image'].toString().isNotEmpty
+                  ? Image.network(
+                      trip['image'],
+                      height: 155,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _imagePlaceholder();
+                      },
+                    )
+                  : _imagePlaceholder(),
             ),
-            child: trip['image'].toString().isNotEmpty
-                ? Image.network(
-                    trip['image'],
-                    height: 155,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _imagePlaceholder();
-                    },
-                  )
-                : _imagePlaceholder(),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        trip['destination'],
+            Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          trip['destination'],
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.charcoal,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isUpcoming
+                              ? AppColors.softSage
+                              : AppColors.sand,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          trip['status'],
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 15,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        trip['location'],
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_month_outlined,
+                        size: 15,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        trip['date'],
+                        style: const TextStyle(
+                          fontSize: 12,
                           color: AppColors.charcoal,
                         ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isUpcoming
-                            ? AppColors.softSage
-                            : AppColors.sand,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        trip['status'],
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      trip['location'],
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      size: 15,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      trip['date'],
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.charcoal,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
