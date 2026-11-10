@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
+import 'destination_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -87,6 +88,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _favoritesKey,
       favorites.toList(),
     );
+  }
+
+  void openDestinationDetail(Map<String, dynamic> destination) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DestinationDetailScreen(
+          destination: destination,
+        ),
+      ),
+    ).then((_) {
+      loadFavorites();
+    });
   }
 
   @override
@@ -243,116 +257,121 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   final name = destination['name'] as String;
                   final isFavorite = favorites.contains(name);
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 18),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius:
-                                  const BorderRadius.vertical(
-                                top: Radius.circular(18),
-                              ),
-                              child: Image.network(
-                                destination['image'],
-                                height: 170,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) {
-                                  return Container(
-                                    height: 170,
-                                    color: AppColors.softSage,
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            Positioned(
-                              top: 12,
-                              right: 12,
-                              child: CircleAvatar(
-                                backgroundColor: Colors.white,
-                                child: IconButton(
-                                  onPressed: () {
-                                    toggleFavorite(name);
-                                  },
-                                  icon: Icon(
-                                    isFavorite
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Row(
+                  return GestureDetector(
+                    onTap: () {
+                      openDestinationDetail(destination);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 18),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.charcoal,
+                              ClipRRect(
+                                borderRadius:
+                                    const BorderRadius.vertical(
+                                  top: Radius.circular(18),
+                                ),
+                                child: Image.network(
+                                  destination['image'],
+                                  height: 170,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (context, error, stackTrace) {
+                                    return Container(
+                                      height: 170,
+                                      color: AppColors.softSage,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on,
-                                          size: 14,
-                                          color: AppColors.primary,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          destination['location'],
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
                               ),
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                destination['rating'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.charcoal,
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.white,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      toggleFavorite(name);
+                                    },
+                                    icon: Icon(
+                                      isFavorite
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          Padding(
+                            padding: const EdgeInsets.all(15),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.charcoal,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.location_on,
+                                            size: 14,
+                                            color: AppColors.primary,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            destination['location'],
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  destination['rating'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.charcoal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }),
