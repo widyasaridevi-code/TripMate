@@ -1,5 +1,8 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 
 class MyTripsScreen extends StatefulWidget {
@@ -10,6 +13,10 @@ class MyTripsScreen extends StatefulWidget {
 }
 
 class _MyTripsScreenState extends State<MyTripsScreen> {
+  static const String _tripsKey = 'saved_trips';
+
+  bool _isLoading = true;
+
   final List<Map<String, dynamic>> trips = [
     {
       'destination': 'Bali',
@@ -29,6 +36,46 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    loadSavedTrips();
+  }
+
+  Future<void> loadSavedTrips() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTrips = prefs.getString(_tripsKey);
+
+    if (savedTrips != null) {
+      try {
+        final List<dynamic> decodedTrips = jsonDecode(savedTrips);
+
+        trips
+          ..clear()
+          ..addAll(
+            decodedTrips.map(
+              (trip) => Map<String, dynamic>.from(trip),
+            ),
+          );
+      } catch (e) {
+        await saveTrips();
+      }
+    } else {
+      await saveTrips();
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> saveTrips() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tripsKey, jsonEncode(trips));
+  }
+
   Future<void> addTrip() async {
     final result = await showDialog<Map<String, String>>(
       context: context,
@@ -47,6 +94,16 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
           'image': '',
         });
       });
+
+      await saveTrips();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Trip saved successfully!'),
+          ),
+        );
+      }
     }
   }
 
@@ -63,98 +120,102 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your Adventures',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Your Adventures',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              'My Trips',
+                              style: TextStyle(
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.charcoal,
+                              ),
+                            ),
+                          ],
+                        ),
+                        CircleAvatar(
+                          backgroundColor: AppColors.softSage,
+                          child: Icon(
+                            Icons.luggage,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: addTrip,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Plan a New Trip'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
                       ),
-                      SizedBox(height: 5),
-                      Text(
-                        'My Trips',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.charcoal,
-                        ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    _buildSectionTitle(
+                      'Upcoming Trips',
+                      upcomingTrips.length,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    if (upcomingTrips.isEmpty)
+                      _buildEmptyState('No upcoming trips yet.')
+                    else
+                      ...upcomingTrips.map(
+                        (trip) => _buildTripCard(trip),
                       ),
-                    ],
-                  ),
-                  CircleAvatar(
-                    backgroundColor: AppColors.softSage,
-                    child: Icon(
-                      Icons.luggage,
-                      color: AppColors.primary,
+
+                    const SizedBox(height: 20),
+
+                    _buildSectionTitle(
+                      'Completed Trips',
+                      completedTrips.length,
                     ),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 25),
+                    const SizedBox(height: 15),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: addTrip,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Plan a New Trip'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
+                    if (completedTrips.isEmpty)
+                      _buildEmptyState('No completed trips yet.')
+                    else
+                      ...completedTrips.map(
+                        (trip) => _buildTripCard(trip),
+                      ),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 28),
-
-              _buildSectionTitle(
-                'Upcoming Trips',
-                upcomingTrips.length,
-              ),
-
-              const SizedBox(height: 15),
-
-              if (upcomingTrips.isEmpty)
-                _buildEmptyState('No upcoming trips yet.')
-              else
-                ...upcomingTrips.map(
-                  (trip) => _buildTripCard(trip),
-                ),
-
-              const SizedBox(height: 20),
-
-              _buildSectionTitle(
-                'Completed Trips',
-                completedTrips.length,
-              ),
-
-              const SizedBox(height: 15),
-
-              if (completedTrips.isEmpty)
-                _buildEmptyState('No completed trips yet.')
-              else
-                ...completedTrips.map(
-                  (trip) => _buildTripCard(trip),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }
