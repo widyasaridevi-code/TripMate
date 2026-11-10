@@ -13,21 +13,117 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String userName = 'Komang Widyasari Devi';
   String userEmail = '';
 
+  String favoriteDestination = 'Not selected';
+  String travelStyle = 'Not selected';
+
+  final List<String> destinations = [
+    'Bali',
+    'Yogyakarta',
+    'Raja Ampat',
+    'Lombok',
+    'Bandung',
+    'Jakarta',
+  ];
+
+  final List<String> travelStyles = [
+    'Adventure',
+    'Relaxing',
+    'Cultural',
+    'Nature',
+    'Luxury',
+    'Budget Friendly',
+  ];
+
   Future<void> editProfile() async {
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (context) {
         return EditProfileDialog(
-          name: userName,
-          email: userEmail,
+          currentName: userName,
+          currentEmail: userEmail,
         );
       },
     );
 
     if (result != null && mounted) {
       setState(() {
-        userName = result['name']!;
-        userEmail = result['email']!;
+        userName = result['name'] ?? userName;
+        userEmail = result['email'] ?? userEmail;
+      });
+    }
+  }
+
+  Future<void> selectPreference({
+    required String title,
+    required List<String> options,
+    required String currentValue,
+    required bool isDestination,
+  }) async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        String selectedValue = currentValue == 'Not selected'
+            ? options.first
+            : currentValue;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(title),
+              content: SingleChildScrollView(
+                child: RadioGroup<String>(
+                  groupValue: selectedValue,
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        selectedValue = value;
+                      });
+                    }
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: options.map((option) {
+                      return RadioListTile<String>(
+                        title: Text(option),
+                        value: option,
+                        activeColor: AppColors.primary,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, selectedValue);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        if (isDestination) {
+          favoriteDestination = result;
+        } else {
+          travelStyle = result;
+        }
       });
     }
   }
@@ -43,192 +139,186 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Your Account',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
                 'My Profile',
                 style: TextStyle(
-                  fontSize: 25,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: AppColors.charcoal,
                 ),
               ),
+              const SizedBox(height: 20),
 
-              const SizedBox(height: 25),
-
-              // Profile Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 42,
-                      backgroundColor: AppColors.softSage,
-                      child: Text(
-                        userName.isNotEmpty
-                            ? userName[0].toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      userName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.charcoal,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      userEmail.isEmpty
-                          ? 'Travel Enthusiast'
-                          : userEmail,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.softSage,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'TripMate Member',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: editProfile,
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Edit Profile'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(
-                            color: AppColors.primary,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildProfileCard(),
 
               const SizedBox(height: 28),
 
               _buildSectionTitle('Personal Information'),
               const SizedBox(height: 12),
+              _buildInfoCard(
+                icon: Icons.person_outline,
+                title: 'Full Name',
+                value: userName,
+              ),
+              _buildInfoCard(
+                icon: Icons.email_outlined,
+                title: 'Email Address',
+                value: userEmail.isEmpty ? 'Not added yet' : userEmail,
+              ),
+              _buildInfoCard(
+                icon: Icons.flag_outlined,
+                title: 'Country',
+                value: 'Indonesia',
+              ),
 
-              _buildInfoCard([
-                _buildMenuItem(
-                  Icons.person_outline,
-                  'Full Name',
-                  userName,
-                ),
-                _buildMenuItem(
-                  Icons.email_outlined,
-                  'Email Address',
-                  userEmail.isEmpty ? 'Not added yet' : userEmail,
-                ),
-                _buildMenuItem(
-                  Icons.location_on_outlined,
-                  'Country',
-                  'Indonesia',
-                ),
-              ]),
-
-              const SizedBox(height: 25),
+              const SizedBox(height: 28),
 
               _buildSectionTitle('Travel Preferences'),
               const SizedBox(height: 12),
+              _buildMenuItem(
+                icon: Icons.location_on_outlined,
+                title: 'Favorite Destination',
+                subtitle: favoriteDestination == 'Not selected'
+                    ? 'Explore your favorite places'
+                    : favoriteDestination,
+                onTap: () {
+                  selectPreference(
+                    title: 'Choose Favorite Destination',
+                    options: destinations,
+                    currentValue: favoriteDestination,
+                    isDestination: true,
+                  );
+                },
+              ),
+              _buildMenuItem(
+                icon: Icons.flight_takeoff_outlined,
+                title: 'Travel Style',
+                subtitle: travelStyle == 'Not selected'
+                    ? 'Discover your travel style'
+                    : travelStyle,
+                onTap: () {
+                  selectPreference(
+                    title: 'Choose Travel Style',
+                    options: travelStyles,
+                    currentValue: travelStyle,
+                    isDestination: false,
+                  );
+                },
+              ),
 
-              _buildInfoCard([
-                _buildMenuItem(
-                  Icons.beach_access_outlined,
-                  'Favorite Destination',
-                  'Explore your favorite places',
-                ),
-                _buildMenuItem(
-                  Icons.luggage_outlined,
-                  'Travel Style',
-                  'Discover your travel style',
-                ),
-              ]),
-
-              const SizedBox(height: 25),
+              const SizedBox(height: 28),
 
               _buildSectionTitle('Settings'),
               const SizedBox(height: 12),
+              _buildMenuItem(
+                icon: Icons.notifications_none,
+                title: 'Notifications',
+                subtitle: 'Manage your notifications',
+              ),
+              _buildMenuItem(
+                icon: Icons.lock_outline,
+                title: 'Privacy & Security',
+                subtitle: 'Manage your account privacy',
+              ),
+              _buildMenuItem(
+                icon: Icons.help_outline,
+                title: 'Help & Support',
+                subtitle: 'Get help with TripMate',
+              ),
 
-              _buildInfoCard([
-                _buildMenuItem(
-                  Icons.notifications_none,
-                  'Notifications',
-                  'Manage your notifications',
-                ),
-                _buildMenuItem(
-                  Icons.lock_outline,
-                  'Privacy & Security',
-                  'Manage your account privacy',
-                ),
-                _buildMenuItem(
-                  Icons.help_outline,
-                  'Help & Support',
-                  'Get assistance',
-                ),
-              ]),
+              const SizedBox(height: 28),
 
-              const SizedBox(height: 25),
-
-              const Center(
+              Center(
                 child: Text(
                   'TripMate v1.0.0',
                   style: TextStyle(
+                    color: AppColors.charcoal.withValues(alpha: 0.5),
                     fontSize: 12,
-                    color: Colors.grey,
                   ),
                 ),
               ),
-
-              const SizedBox(height: 15),
+              const SizedBox(height: 20),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 38,
+            backgroundColor: AppColors.softSage,
+            child: Text(
+              userName.isNotEmpty
+                  ? userName.trim().split(' ').map((e) => e[0]).take(2).join()
+                  : 'TM',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            userName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoal,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            userEmail.isEmpty ? 'Travel Enthusiast' : userEmail,
+            style: TextStyle(
+              color: AppColors.charcoal.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.softSage,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'TripMate Member',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          OutlinedButton.icon(
+            onPressed: editProfile,
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: const Text('Edit Profile'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -237,68 +327,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: FontWeight.bold,
         color: AppColors.charcoal,
       ),
     );
   }
 
-  Widget _buildInfoCard(List<Widget> children) {
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 5,
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _buildMenuItem(
-    IconData icon,
-    String title,
-    String subtitle,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.softSage,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primary,
-              size: 21,
-            ),
-          ),
-          const SizedBox(width: 13),
+          Icon(icon, color: AppColors.primary, size: 22),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.charcoal,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.charcoal.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
+                  value,
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.charcoal,
                   ),
                 ),
               ],
@@ -308,22 +377,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.primary, size: 22),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.charcoal,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.charcoal.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null)
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.charcoal,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// Edit Profile Dialog
 class EditProfileDialog extends StatefulWidget {
-  final String name;
-  final String email;
+  final String currentName;
+  final String currentEmail;
 
   const EditProfileDialog({
     super.key,
-    required this.name,
-    required this.email,
+    required this.currentName,
+    required this.currentEmail,
   });
 
   @override
-  State<EditProfileDialog> createState() =>
-      _EditProfileDialogState();
+  State<EditProfileDialog> createState() => _EditProfileDialogState();
 }
 
 class _EditProfileDialogState extends State<EditProfileDialog> {
@@ -333,8 +456,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: widget.name);
-    emailController = TextEditingController(text: widget.email);
+    nameController = TextEditingController(text: widget.currentName);
+    emailController = TextEditingController(text: widget.currentEmail);
   }
 
   @override
@@ -342,34 +465,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     nameController.dispose();
     emailController.dispose();
     super.dispose();
-  }
-
-  void saveProfile() {
-    final name = nameController.text.trim();
-    final email = emailController.text.trim();
-
-    if (name.isEmpty || email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please complete all fields.'),
-        ),
-      );
-      return;
-    }
-
-    if (!email.contains('@') || !email.contains('.')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid email address.'),
-        ),
-      );
-      return;
-    }
-
-    Navigator.pop(context, {
-      'name': name,
-      'email': email,
-    });
   }
 
   @override
@@ -387,7 +482,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 prefixIcon: Icon(Icons.person_outline),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 14),
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
@@ -401,11 +496,21 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: saveProfile,
+          onPressed: () {
+            Navigator.pop(
+              context,
+              {
+                'name': nameController.text.trim(),
+                'email': emailController.text.trim(),
+              },
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
