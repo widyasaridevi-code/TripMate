@@ -1,15 +1,22 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/trips_provider.dart';
+import 'providers/weather_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => TripsProvider()..loadTrips(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => TripsProvider()..loadTrips(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => WeatherProvider(),
+        ),
+      ],
       child: const TripMateApp(),
     ),
   );

@@ -1,6 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../providers/weather_provider.dart';
 import '../theme/app_colors.dart';
 import 'destination_detail_screen.dart';
 
@@ -58,6 +61,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     loadFavorites();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<WeatherProvider>().loadWeather();
+      }
+    });
   }
 
   Future<void> loadFavorites() async {
@@ -105,6 +114,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final weatherProvider = context.watch<WeatherProvider>();
+
     final filteredDestinations = destinations.where((destination) {
       final matchesCategory = selectedCategory == 'All' ||
           destination['category'] == selectedCategory;
@@ -256,6 +267,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ...filteredDestinations.map((destination) {
                   final name = destination['name'] as String;
                   final isFavorite = favorites.contains(name);
+                  final weather =
+                      weatherProvider.weatherData[name];
 
                   return GestureDetector(
                     onTap: () {
@@ -351,6 +364,44 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                           ),
                                         ],
                                       ),
+                                      const SizedBox(height: 7),
+
+                                      // Weather information
+                                      if (weather != null)
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.wb_cloudy_outlined,
+                                              size: 15,
+                                              color: AppColors.primary,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              '${weather.temperature.toStringAsFixed(1)}°C · ${weather.description}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      else if (weatherProvider.isLoading)
+                                        const Text(
+                                          'Loading weather...',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                          ),
+                                        )
+                                      else if (weatherProvider.errorMessage != null)
+                                        const Text(
+                                          'Weather unavailable',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
