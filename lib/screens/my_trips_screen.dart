@@ -1,83 +1,15 @@
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/trips_provider.dart';
 import '../theme/app_colors.dart';
 import 'trip_detail_screen.dart';
 
-class MyTripsScreen extends StatefulWidget {
+class MyTripsScreen extends StatelessWidget {
   const MyTripsScreen({super.key});
 
-  @override
-  State<MyTripsScreen> createState() => _MyTripsScreenState();
-}
-
-class _MyTripsScreenState extends State<MyTripsScreen> {
-  static const String _tripsKey = 'saved_trips';
-
-  bool _isLoading = true;
-
-  final List<Map<String, dynamic>> trips = [
-    {
-      'destination': 'Bali',
-      'location': 'Indonesia',
-      'date': '15 - 18 December 2026',
-      'status': 'Upcoming',
-      'image':
-          'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800',
-    },
-    {
-      'destination': 'Raja Ampat',
-      'location': 'West Papua, Indonesia',
-      'date': '10 - 14 August 2026',
-      'status': 'Completed',
-      'image':
-          'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800',
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    loadSavedTrips();
-  }
-
-  Future<void> loadSavedTrips() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedTrips = prefs.getString(_tripsKey);
-
-    if (savedTrips != null) {
-      try {
-        final List<dynamic> decodedTrips = jsonDecode(savedTrips);
-
-        trips
-          ..clear()
-          ..addAll(
-            decodedTrips.map(
-              (trip) => Map<String, dynamic>.from(trip),
-            ),
-          );
-      } catch (e) {
-        await saveTrips();
-      }
-    } else {
-      await saveTrips();
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> saveTrips() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tripsKey, jsonEncode(trips));
-  }
-
-  Future<void> addTrip() async {
+  Future<void> addTrip(BuildContext context) async {
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (dialogContext) {
@@ -85,20 +17,14 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       },
     );
 
-    if (result != null && mounted) {
-      setState(() {
-        trips.insert(0, {
-          'destination': result['destination']!,
-          'location': result['location']!,
-          'date': result['date']!,
-          'status': 'Upcoming',
-          'image': '',
-        });
-      });
+    if (result != null && context.mounted) {
+      await context.read<TripsProvider>().addTrip(
+            destination: result['destination']!,
+            location: result['location']!,
+            date: result['date']!,
+          );
 
-      await saveTrips();
-
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Trip saved successfully!'),
@@ -108,7 +34,10 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     }
   }
 
-  void openTripDetail(Map<String, dynamic> trip) {
+  void openTripDetail(
+    BuildContext context,
+    Map<String, dynamic> trip,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -121,18 +50,15 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final upcomingTrips = trips
-        .where((trip) => trip['status'] == 'Upcoming')
-        .toList();
+    final tripsProvider = context.watch<TripsProvider>();
 
-    final completedTrips = trips
-        .where((trip) => trip['status'] == 'Completed')
-        .toList();
+    final upcomingTrips = tripsProvider.upcomingTrips;
+    final completedTrips = tripsProvider.completedTrips;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: _isLoading
+        child: tripsProvider.isLoading
             ? const Center(
                 child: CircularProgressIndicator(),
               )
@@ -178,7 +104,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: addTrip,
+                        onPressed: () => addTrip(context),
                         icon: const Icon(Icons.add),
                         label: const Text('Plan a New Trip'),
                         style: ElevatedButton.styleFrom(
@@ -201,7 +127,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                       _buildEmptyState('No upcoming trips yet.')
                     else
                       ...upcomingTrips.map(
-                        (trip) => _buildTripCard(trip),
+                        (trip) => _buildTripCard(context, trip),
                       ),
                     const SizedBox(height: 20),
                     _buildSectionTitle(
@@ -213,7 +139,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                       _buildEmptyState('No completed trips yet.')
                     else
                       ...completedTrips.map(
-                        (trip) => _buildTripCard(trip),
+                        (trip) => _buildTripCard(context, trip),
                       ),
                   ],
                 ),
@@ -261,13 +187,14 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     );
   }
 
-  Widget _buildTripCard(Map<String, dynamic> trip) {
+  Widget _buildTripCard(
+    BuildContext context,
+    Map<String, dynamic> trip,
+  ) {
     final isUpcoming = trip['status'] == 'Upcoming';
 
     return GestureDetector(
-      onTap: () {
-        openTripDetail(trip);
-      },
+      onTap: () => openTripDetail(context, trip),
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
         decoration: BoxDecoration(
@@ -392,7 +319,6 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   }
 }
 
-// Dialog untuk menambahkan trip baru
 class _AddTripDialog extends StatefulWidget {
   const _AddTripDialog();
 
