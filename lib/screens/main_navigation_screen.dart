@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
 import 'my_trips_screen.dart';
+import 'profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -20,11 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     HomeScreen(),
     ExploreScreen(),
     MyTripsScreen(),
-    _PlaceholderPage(
-      title: 'Profile',
-      subtitle: 'Manage your travel profile.',
-      icon: Icons.person_outline,
-    ),
+    ProfileScreen(),
   ];
 
   @override
@@ -66,59 +63,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Profile',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  const _PlaceholderPage({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 65,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.charcoal,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
