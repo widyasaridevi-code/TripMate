@@ -1,3 +1,4 @@
+
 import 'package:flutter/foundation.dart';
 
 import '../models/weather_model.dart';
@@ -11,13 +12,14 @@ class WeatherProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _hasLoaded = false;
+  bool _isDisposed = false;
 
   Map<String, WeatherModel> get weatherData => _weatherData;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
   Future<void> loadWeather() async {
-    if (_hasLoaded || _isLoading) return;
+    if (_hasLoaded || _isLoading || _isDisposed) return;
 
     _isLoading = true;
     _errorMessage = null;
@@ -30,22 +32,46 @@ class WeatherProvider extends ChangeNotifier {
       'Jakarta': [-6.2088, 106.8456],
     };
 
+    bool hasError = false;
+
     try {
       for (final destination in destinations.entries) {
-        final weather = await _weatherService.getWeather(
-          latitude: destination.value[0],
-          longitude: destination.value[1],
-        );
+        if (_isDisposed) return;
 
-        _weatherData[destination.key] = weather;
+        // Lewati destinasi yang datanya sudah berhasil dimuat.
+        if (_weatherData.containsKey(destination.key)) continue;
+
+        try {
+          final weather = await _weatherService.getWeather(
+            latitude: destination.value[0],
+            longitude: destination.value[1],
+          );
+
+          if (_isDisposed) return;
+
+          _weatherData[destination.key] = weather;
+        } catch (e) {
+          hasError = true;
+        }
       }
 
-      _hasLoaded = true;
-    } catch (e) {
-      _errorMessage = 'Gagal mengambil data cuaca';
-    }
+      _hasLoaded = _weatherData.length == destinations.length;
 
-    _isLoading = false;
-    notifyListeners();
+      if (hasError) {
+        _errorMessage = 'Gagal mengambil sebagian data cuaca';
+      }
+    } finally {
+      _isLoading = false;
+
+      if (!_isDisposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

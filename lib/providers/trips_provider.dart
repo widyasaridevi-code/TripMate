@@ -1,5 +1,7 @@
 
 import 'package:flutter/foundation.dart';
+
+import '../models/trip_model.dart';
 import '../repositories/saved_trips_repository.dart';
 
 class TripsProvider extends ChangeNotifier {
@@ -13,29 +15,17 @@ class TripsProvider extends ChangeNotifier {
 
   String? errorMessage;
 
-  final List<Map<String, dynamic>> _trips = [];
+  final List<TripModel> _trips = [];
 
-  List<Map<String, dynamic>> get trips =>
-      List.unmodifiable(_trips);
+  List<TripModel> get trips => List.unmodifiable(_trips);
 
-  List<Map<String, dynamic>> get upcomingTrips =>
-      _trips
-          .where((trip) => trip['status'] == 'Upcoming')
-          .toList();
+  List<TripModel> get upcomingTrips => _trips
+      .where((trip) => trip.status == 'Upcoming')
+      .toList();
 
-  List<Map<String, dynamic>> get completedTrips =>
-      _trips
-          .where((trip) => trip['status'] == 'Completed')
-          .toList();
-
-  // Menyesuaikan data Supabase dengan format yang dipakai UI
-  Map<String, dynamic> _formatTrip(Map<String, dynamic> trip) {
-    return {
-      ...trip,
-      'date': trip['travel_date'] ?? trip['date'] ?? '',
-      'image': trip['image'] ?? '',
-    };
-  }
+  List<TripModel> get completedTrips => _trips
+      .where((trip) => trip.status == 'Completed')
+      .toList();
 
   // READ
   Future<void> loadTrips() async {
@@ -48,7 +38,7 @@ class TripsProvider extends ChangeNotifier {
 
       _trips
         ..clear()
-        ..addAll(result.map(_formatTrip));
+        ..addAll(result);
     } catch (e) {
       errorMessage = e.toString();
     }
@@ -71,7 +61,7 @@ class TripsProvider extends ChangeNotifier {
         'status': 'Upcoming',
       });
 
-      _trips.insert(0, _formatTrip(result));
+      _trips.insert(0, result);
 
       errorMessage = null;
       notifyListeners();
@@ -94,11 +84,11 @@ class TripsProvider extends ChangeNotifier {
       );
 
       final index = _trips.indexWhere(
-        (trip) => trip['id'] == id,
+        (trip) => trip.id == id,
       );
 
       if (index != -1) {
-        _trips[index] = _formatTrip(result);
+        _trips[index] = result;
       }
 
       errorMessage = null;
@@ -116,7 +106,7 @@ class TripsProvider extends ChangeNotifier {
       await _repository.deleteTrip(id);
 
       _trips.removeWhere(
-        (trip) => trip['id'] == id,
+        (trip) => trip.id == id,
       );
 
       errorMessage = null;

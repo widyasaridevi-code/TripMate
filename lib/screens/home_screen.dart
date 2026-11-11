@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../widgets/category_item.dart';
+import '../widgets/destination_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -84,19 +86,19 @@ class HomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
-                  _CategoryItem(
+                  CategoryItem(
                     icon: Icons.beach_access,
                     label: 'Beach',
                   ),
-                  _CategoryItem(
+                  CategoryItem(
                     icon: Icons.terrain,
                     label: 'Mountain',
                   ),
-                  _CategoryItem(
+                  CategoryItem(
                     icon: Icons.forest,
                     label: 'Nature',
                   ),
-                  _CategoryItem(
+                  CategoryItem(
                     icon: Icons.location_city,
                     label: 'City',
                   ),
@@ -227,14 +229,14 @@ class HomeScreen extends StatelessWidget {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: const [
-                    _DestinationCard(
+                    DestinationCard(
                       name: 'Ubud',
                       country: 'Bali, Indonesia',
                       imageUrl:
                           'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=600',
                     ),
                     SizedBox(width: 15),
-                    _DestinationCard(
+                    DestinationCard(
                       name: 'Raja Ampat',
                       country: 'West Papua, Indonesia',
                       imageUrl:
@@ -246,101 +248,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CategoryItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _CategoryItem({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: AppColors.softSage,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Icon(
-            icon,
-            color: AppColors.primary,
-            size: 25,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.charcoal,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DestinationCard extends StatelessWidget {
-  final String name;
-  final String country;
-  final String imageUrl;
-
-  const _DestinationCard({
-    required this.name,
-    required this.country,
-    required this.imageUrl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 155,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Image.network(
-              imageUrl,
-              height: 115,
-              width: 155,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 115,
-                  width: 155,
-                  color: AppColors.softSage,
-                  child: const Icon(Icons.image_not_supported),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            name,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: AppColors.charcoal,
-            ),
-          ),
-          Text(
-            country,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
-            ),
-          ),
-        ],
       ),
     );
   }

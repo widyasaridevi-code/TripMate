@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/trip_model.dart';
 import '../providers/trips_provider.dart';
 import '../theme/app_colors.dart';
 import 'trip_detail_screen.dart';
@@ -12,38 +13,39 @@ class MyTripsScreen extends StatelessWidget {
   Future<void> addTrip(BuildContext context) async {
     final result = await showDialog<Map<String, String>>(
       context: context,
-      builder: (dialogContext) {
-        return const _AddTripDialog();
-      },
+      builder: (dialogContext) => const _AddTripDialog(),
     );
 
     if (result != null && context.mounted) {
-      await context.read<TripsProvider>().addTrip(
-            destination: result['destination']!,
-            location: result['location']!,
-            date: result['date']!,
-          );
+      try {
+        await context.read<TripsProvider>().addTrip(
+              destination: result['destination']!,
+              location: result['location']!,
+              date: result['date']!,
+            );
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Trip saved successfully!'),
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Trip saved successfully!'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save trip: $e')),
+          );
+        }
       }
     }
   }
 
-  void openTripDetail(
-    BuildContext context,
-    Map<String, dynamic> trip,
-  ) {
+  void openTripDetail(BuildContext context, TripModel trip) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TripDetailScreen(
-          trip: trip,
-        ),
+        builder: (context) => TripDetailScreen(trip: trip),
       ),
     );
   }
@@ -189,9 +191,9 @@ class MyTripsScreen extends StatelessWidget {
 
   Widget _buildTripCard(
     BuildContext context,
-    Map<String, dynamic> trip,
+    TripModel trip,
   ) {
-    final isUpcoming = trip['status'] == 'Upcoming';
+    final isUpcoming = trip.status == 'Upcoming';
 
     return GestureDetector(
       onTap: () => openTripDetail(context, trip),
@@ -208,9 +210,9 @@ class MyTripsScreen extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(18),
               ),
-              child: trip['image'].toString().isNotEmpty
+              child: trip.image.isNotEmpty
                   ? Image.network(
-                      trip['image'],
+                      trip.image,
                       height: 155,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -230,7 +232,7 @@ class MyTripsScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          trip['destination'],
+                          trip.destination,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -250,7 +252,7 @@ class MyTripsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          trip['status'],
+                          trip.status,
                           style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.primary,
@@ -270,7 +272,7 @@ class MyTripsScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        trip['location'],
+                        trip.location,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -288,7 +290,7 @@ class MyTripsScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        trip['date'],
+                        trip.date,
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.charcoal,
@@ -415,9 +417,7 @@ class _AddTripDialogState extends State<_AddTripDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         ElevatedButton(

@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -19,10 +20,16 @@ class WeatherService {
       },
     );
 
-    final response = await http.get(uri);
+    final response = await http
+        .get(uri)
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
+      if (data is! Map<String, dynamic>) {
+        throw Exception('Format data cuaca tidak valid');
+      }
 
       return WeatherModel.fromJson(data);
     } else {

@@ -1,4 +1,5 @@
 
+import '../models/trip_model.dart';
 import '../services/saved_trips_service.dart';
 
 class SavedTripsRepository {
@@ -7,23 +8,31 @@ class SavedTripsRepository {
   SavedTripsRepository(this._service);
 
   // READ
-  Future<List<Map<String, dynamic>>> getTrips() {
-    return _service.getTrips();
+  Future<List<TripModel>> getTrips() async {
+    final result = await _service.getTrips();
+
+    return result
+        .map((trip) => TripModel.fromJson(trip))
+        .toList();
   }
 
   // CREATE
-  Future<Map<String, dynamic>> addTrip(
+  Future<TripModel> addTrip(
     Map<String, dynamic> trip,
-  ) {
-    return _service.addTrip(trip);
+  ) async {
+    final result = await _service.addTrip(trip);
+
+    return TripModel.fromJson(result);
   }
 
   // UPDATE
-  Future<Map<String, dynamic>> updateTrip(
+  Future<TripModel> updateTrip(
     int id,
     Map<String, dynamic> trip,
-  ) {
-    return _service.updateTrip(id, trip);
+  ) async {
+    final result = await _service.updateTrip(id, trip);
+
+    return TripModel.fromJson(result);
   }
 
   // DELETE

@@ -13,10 +13,24 @@ class WeatherModel {
   factory WeatherModel.fromJson(Map<String, dynamic> json) {
     final current = json['current'];
 
+    if (current is! Map<String, dynamic>) {
+      throw const FormatException('Data cuaca tidak valid');
+    }
+
+    final temperature = current['temperature_2m'];
+    final windSpeed = current['wind_speed_10m'];
+    final weatherCode = current['weather_code'];
+
+    if (temperature is! num ||
+        windSpeed is! num ||
+        weatherCode is! num) {
+      throw const FormatException('Format nilai cuaca tidak valid');
+    }
+
     return WeatherModel(
-      temperature: (current['temperature_2m'] as num).toDouble(),
-      windSpeed: (current['wind_speed_10m'] as num).toDouble(),
-      weatherCode: current['weather_code'] as int,
+      temperature: temperature.toDouble(),
+      windSpeed: windSpeed.toDouble(),
+      weatherCode: weatherCode.toInt(),
     );
   }
 

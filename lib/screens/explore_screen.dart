@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/weather_provider.dart';
 import '../theme/app_colors.dart';
+import '../widgets/weather_info.dart';
 import 'destination_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -200,8 +201,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     'Nature',
                     'City',
                   ].map((category) {
-                    final isSelected =
-                        selectedCategory == category;
+                    final isSelected = selectedCategory == category;
 
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
@@ -264,168 +264,149 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                 )
               else
-                ...filteredDestinations.map((destination) {
-                  final name = destination['name'] as String;
-                  final isFavorite = favorites.contains(name);
-                  final weather =
-                      weatherProvider.weatherData[name];
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount =
+                        constraints.maxWidth >= 700 ? 2 : 1;
 
-                  return GestureDetector(
-                    onTap: () {
-                      openDestinationDetail(destination);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 18),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(18),
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: filteredDestinations.length,
+                      gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 15,
+                        mainAxisSpacing: 18,
+                        mainAxisExtent: 310,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius:
-                                    const BorderRadius.vertical(
-                                  top: Radius.circular(18),
-                                ),
-                                child: Image.network(
-                                  destination['image'],
-                                  height: 170,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder:
-                                      (context, error, stackTrace) {
-                                    return Container(
-                                      height: 170,
-                                      color: AppColors.softSage,
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.image_not_supported,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: CircleAvatar(
-                                  backgroundColor: Colors.white,
-                                  child: IconButton(
-                                    onPressed: () {
-                                      toggleFavorite(name);
-                                    },
-                                    icon: Icon(
-                                      isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.charcoal,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.location_on,
-                                            size: 14,
-                                            color: AppColors.primary,
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            destination['location'],
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 7),
+                      itemBuilder: (context, index) {
+                        final destination = filteredDestinations[index];
+                        final name = destination['name'] as String;
+                        final isFavorite = favorites.contains(name);
+                        final weather =
+                            weatherProvider.weatherData[name];
 
-                                      // Weather information
-                                      if (weather != null)
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.wb_cloudy_outlined,
-                                              size: 15,
-                                              color: AppColors.primary,
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Text(
-                                              '${weather.temperature.toStringAsFixed(1)}°C · ${weather.description}',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: AppColors.primary,
-                                                fontWeight: FontWeight.w500,
+                        return GestureDetector(
+                          onTap: () {
+                            openDestinationDetail(destination);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius:
+                                          const BorderRadius.vertical(
+                                        top: Radius.circular(18),
+                                      ),
+                                      child: Image.network(
+                                        destination['image'],
+                                        height: 170,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Container(
+                                            height: 170,
+                                            color: AppColors.softSage,
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.image_not_supported,
                                               ),
                                             ),
-                                          ],
-                                        )
-                                      else if (weatherProvider.isLoading)
-                                        const Text(
-                                          'Loading weather...',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey,
-                                          ),
-                                        )
-                                      else if (weatherProvider.errorMessage != null)
-                                        const Text(
-                                          'Weather unavailable',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 12,
+                                      right: 12,
+                                      child: CircleAvatar(
+                                        backgroundColor: Colors.white,
+                                        child: IconButton(
+                                          onPressed: () {
+                                            toggleFavorite(name);
+                                          },
+                                          icon: Icon(
+                                            isFavorite
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: AppColors.primary,
                                           ),
                                         ),
-                                    ],
-                                  ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  destination['rating'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.charcoal,
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(15),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                name,
+                                                style: const TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.charcoal,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Text(
+                                                destination['location'],
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 7),
+                                              WeatherInfo(
+                                                weather: weather,
+                                                isLoading:
+                                                    weatherProvider.isLoading,
+                                                errorMessage:
+                                                    weatherProvider.errorMessage,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.star,
+                                          color: Colors.amber,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          destination['rating'],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.charcoal,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+                        );
+                      },
+                    );
+                  },
+                ),
             ],
           ),
         ),

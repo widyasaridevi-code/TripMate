@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/trip_model.dart';
 import '../providers/trips_provider.dart';
 import '../theme/app_colors.dart';
 
 class TripDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> trip;
+  final TripModel trip;
 
   const TripDetailScreen({
     super.key,
@@ -21,9 +22,11 @@ class TripDetailScreen extends StatelessWidget {
 
     if (result == null || !context.mounted) return;
 
+    if (trip.id == null) return;
+
     try {
       await context.read<TripsProvider>().updateTrip(
-        trip['id'] as int,
+        trip.id!,
         {
           'destination': result['destination']!,
           'location': result['location']!,
@@ -76,10 +79,10 @@ class TripDetailScreen extends StatelessWidget {
 
     if (confirm != true || !context.mounted) return;
 
+    if (trip.id == null) return;
+
     try {
-      await context.read<TripsProvider>().deleteTrip(
-        trip['id'] as int,
-      );
+      await context.read<TripsProvider>().deleteTrip(trip.id!);
 
       if (!context.mounted) return;
 
@@ -101,7 +104,7 @@ class TripDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUpcoming = trip['status'] == 'Upcoming';
+    final isUpcoming = trip.status == 'Upcoming';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -139,9 +142,9 @@ class TripDetailScreen extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(18),
-              child: trip['image'].toString().isNotEmpty
+              child: trip.image.isNotEmpty
                   ? Image.network(
-                      trip['image'],
+                      trip.image,
                       height: 220,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -153,7 +156,9 @@ class TripDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             Text(
-              trip['destination'] ?? 'Unknown Destination',
+              trip.destination.isNotEmpty
+                  ? trip.destination
+                  : 'Unknown Destination',
               style: const TextStyle(
                 fontSize: 27,
                 fontWeight: FontWeight.bold,
@@ -171,7 +176,7 @@ class TripDetailScreen extends StatelessWidget {
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    trip['location'] ?? '-',
+                    trip.location.isNotEmpty ? trip.location : '-',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.grey,
@@ -193,19 +198,21 @@ class TripDetailScreen extends StatelessWidget {
             _infoCard(
               icon: Icons.calendar_month_outlined,
               title: 'Travel Date',
-              value: trip['date'] ?? '-',
+              value: trip.date.isNotEmpty ? trip.date : '-',
             ),
             const SizedBox(height: 12),
             _infoCard(
               icon: Icons.flag_outlined,
               title: 'Trip Status',
-              value: trip['status'] ?? '-',
+              value: trip.status,
             ),
             const SizedBox(height: 12),
             _infoCard(
               icon: Icons.place_outlined,
               title: 'Destination',
-              value: trip['destination'] ?? '-',
+              value: trip.destination.isNotEmpty
+                  ? trip.destination
+                  : '-',
             ),
             const SizedBox(height: 25),
             Container(
@@ -317,7 +324,7 @@ class TripDetailScreen extends StatelessWidget {
 }
 
 class _EditTripDialog extends StatefulWidget {
-  final Map<String, dynamic> trip;
+  final TripModel trip;
 
   const _EditTripDialog({required this.trip});
 
@@ -335,15 +342,15 @@ class _EditTripDialogState extends State<_EditTripDialog> {
     super.initState();
 
     destinationController = TextEditingController(
-      text: widget.trip['destination'] ?? '',
+      text: widget.trip.destination,
     );
 
     locationController = TextEditingController(
-      text: widget.trip['location'] ?? '',
+      text: widget.trip.location,
     );
 
     dateController = TextEditingController(
-      text: widget.trip['date'] ?? '',
+      text: widget.trip.date,
     );
   }
 
